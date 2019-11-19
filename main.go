@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"io"
 	"os"
 )
 
@@ -62,6 +63,10 @@ func getCodeU32(emu *Emulator, index int) uint32 {
 	return ret
 }
 
+func getCodeS32(emu *Emulator, index int) int32 {
+	return int32(getCodeU32(emu, index))
+}
+
 func movR32Imm32(emu *Emulator) {
 	reg := getCodeU8(emu, 0) - 0xB8
 	val := getCodeU32(emu, 1)
@@ -74,10 +79,16 @@ func shortJmp(emu *Emulator) {
 	emu.eip = uint32(int32(emu.eip) + int32(diff+2))
 }
 
+func nearJmp(emu *Emulator) {
+	diff := getCodeS32(emu, 1)
+	emu.eip = uint32(int32(emu.eip) + diff + 5)
+}
+
 func initInstructions() {
 	for i := 0; i < 8; i++ {
 		instructions[0xB8+i] = movR32Imm32
 	}
+	instructions[0xE9] = nearJmp
 	instructions[0xEB] = shortJmp
 }
 
@@ -87,7 +98,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	emu := NewEmulator(memSize, 0x00000000, 0x00007C00)
+	emu := NewEmulator(memSize, 0x00007C00, 0x00007C00)
 
 	binary, err := os.Open(os.Args[1])
 	if err != nil {
@@ -96,11 +107,10 @@ func main() {
 	}
 	defer binary.Close()
 
-	bs := make([]uint8, 512)
-	if _, err := binary.Read(bs); err != nil {
+	reader := io.LimitReader(binary, 512)
+	if _, err := reader.Read(emu.memory[0x00007c00:]); err != nil {
 		os.Exit(1)
 	}
-	emu.memory = bs
 
 	initInstructions()
 
