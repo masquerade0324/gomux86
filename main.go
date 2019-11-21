@@ -30,8 +30,6 @@ type Emulator struct {
 	eip       uint32
 }
 
-var instructions [256]func(*Emulator)
-
 func NewEmulator(size int, eip, esp uint32) *Emulator {
 	emu := new(Emulator)
 	emu.memory = make([]uint8, size)
@@ -45,51 +43,6 @@ func dumpRegisters(emu *Emulator) {
 		fmt.Printf("%v = %08x\n", regNames[i], v)
 	}
 	fmt.Printf("EIP = %08x\n", emu.eip)
-}
-
-func getCodeU8(emu *Emulator, index int) uint8 {
-	return emu.memory[int(emu.eip)+index]
-}
-
-func getCodeS8(emu *Emulator, index int) int8 {
-	return int8(emu.memory[int(emu.eip)+index])
-}
-
-func getCodeU32(emu *Emulator, index int) uint32 {
-	var ret uint32 = 0
-	for i := 0; i < 4; i++ {
-		ret += uint32(getCodeU8(emu, index+i)) << uint((i * 8))
-	}
-	return ret
-}
-
-func getCodeS32(emu *Emulator, index int) int32 {
-	return int32(getCodeU32(emu, index))
-}
-
-func movR32Imm32(emu *Emulator) {
-	reg := getCodeU8(emu, 0) - 0xB8
-	val := getCodeU32(emu, 1)
-	emu.registers[reg] = val
-	emu.eip += 5
-}
-
-func shortJmp(emu *Emulator) {
-	diff := getCodeS8(emu, 1)
-	emu.eip = uint32(int32(emu.eip) + int32(diff+2))
-}
-
-func nearJmp(emu *Emulator) {
-	diff := getCodeS32(emu, 1)
-	emu.eip = uint32(int32(emu.eip) + diff + 5)
-}
-
-func initInstructions() {
-	for i := 0; i < 8; i++ {
-		instructions[0xB8+i] = movR32Imm32
-	}
-	instructions[0xE9] = nearJmp
-	instructions[0xEB] = shortJmp
 }
 
 func main() {
