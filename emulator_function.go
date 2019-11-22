@@ -51,3 +51,16 @@ func setRegister32(emu *Emulator, index int, val uint32) {
 func getRegister32(emu *Emulator, index int) uint32 {
 	return emu.registers[index]
 }
+
+func push32(emu *Emulator, val uint32) {
+	addr := getRegister32(emu, regEsp) - 4
+	setRegister32(emu, regEsp, addr)
+	setMemory32(emu, addr, val)
+}
+
+func pop32(emu *Emulator) uint32 {
+	addr := getRegister32(emu, regEsp)
+	ret := getMemory32(emu, addr)
+	setRegister32(emu, regEsp, addr+4)
+	return ret
+}
