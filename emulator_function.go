@@ -1,5 +1,12 @@
 package main
 
+const (
+	carryFlag    uint32 = 1
+	zeroFlag     uint32 = 1 << 6
+	signFlag     uint32 = 1 << 7
+	overflowFlag uint32 = 1 << 11
+)
+
 func getCodeU8(emu *Emulator, index int) uint8 {
 	return emu.memory[int(emu.eip)+index]
 }
@@ -63,4 +70,63 @@ func pop32(emu *Emulator) uint32 {
 	ret := getMemory32(emu, addr)
 	setRegister32(emu, regEsp, addr+4)
 	return ret
+}
+
+func updateEflagsSub(emu *Emulator, v1, v2 uint32, res uint64) {
+	sign1 := int(v1 >> 31)
+	sign2 := int(v2 >> 31)
+	signr := int((res >> 31) & 1)
+
+	setCarry(emu, res>>32 == 1)
+	setZero(emu, res == 0)
+	setSign(emu, signr == 1)
+	setOverflow(emu, sign1 != sign2 && sign1 != signr)
+}
+
+func setCarry(emu *Emulator, isCarry bool) {
+	if isCarry {
+		emu.eflags |= carryFlag
+	} else {
+		emu.eflags &= ^carryFlag
+	}
+}
+
+func setZero(emu *Emulator, isZero bool) {
+	if isZero {
+		emu.eflags |= zeroFlag
+	} else {
+		emu.eflags &= ^zeroFlag
+	}
+}
+
+func setSign(emu *Emulator, isSign bool) {
+	if isSign {
+		emu.eflags |= signFlag
+	} else {
+		emu.eflags &= ^signFlag
+	}
+}
+
+func setOverflow(emu *Emulator, isOverflow bool) {
+	if isOverflow {
+		emu.eflags |= overflowFlag
+	} else {
+		emu.eflags &= ^overflowFlag
+	}
+}
+
+func isCarry(emu *Emulator) bool {
+	return emu.eflags&carryFlag != 0
+}
+
+func isZero(emu *Emulator) bool {
+	return emu.eflags&zeroFlag != 0
+}
+
+func isSign(emu *Emulator) bool {
+	return emu.eflags&signFlag != 0
+}
+
+func isOverflow(emu *Emulator) bool {
+	return emu.eflags&overflowFlag != 0
 }
