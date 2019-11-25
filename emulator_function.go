@@ -51,8 +51,27 @@ func getMemory32(emu *Emulator, addr uint32) uint32 {
 	return ret
 }
 
+func setRegister8(emu *Emulator, index int, val uint8) {
+	var reg uint32
+	if index < 4 {
+		reg = emu.registers[index] & 0xffffff00
+		emu.registers[index] = reg | uint32(val)
+	} else {
+		reg = emu.registers[index-4] & 0xffff00ff
+		emu.registers[index-4] = reg | (uint32(val) << 8)
+	}
+}
+
 func setRegister32(emu *Emulator, index int, val uint32) {
 	emu.registers[index] = val
+}
+
+func getRegister8(emu *Emulator, index int) uint8 {
+	if index < 4 {
+		return uint8(emu.registers[index] & 0xff)
+	} else {
+		return uint8((emu.registers[index-4] >> 8) & 0xff)
+	}
 }
 
 func getRegister32(emu *Emulator, index int) uint32 {

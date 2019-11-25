@@ -19,6 +19,14 @@ const (
 	regEsi
 	regEdi
 	regCnt
+	regAl = regEax
+	regCl = regEcx
+	regDl = regEdx
+	regBl = regEbx
+	regAh = regAl + 4
+	regCh = regCl + 4
+	regDh = regDl + 4
+	regBh = regBl + 4
 )
 
 var regNames = [regCnt]string{"EAX", "ECX", "EDX", "EBX", "ESP", "EBP", "ESI", "EDI"}
@@ -46,9 +54,14 @@ func dumpRegisters(emu *Emulator) {
 }
 
 func main() {
-	if len(os.Args) != 2 {
-		fmt.Println("usage: gomux86 filename")
+	isQuiet := false
+	if len(os.Args) < 2 || len(os.Args) > 3 {
+		fmt.Println("usage: gomux86 filename [-q]")
 		os.Exit(1)
+	} else if len(os.Args) == 3 {
+		if os.Args[2] == "-q" {
+			isQuiet = true
+		}
 	}
 
 	emu := NewEmulator(memSize, 0x00007C00, 0x00007C00)
@@ -70,7 +83,9 @@ func main() {
 	for emu.eip < memSize {
 		code := getCodeU8(emu, 0)
 
-		fmt.Printf("EIP = %x, Code = %02x\n", emu.eip, code)
+		if !isQuiet {
+			fmt.Printf("EIP = %x, Code = %02x\n", emu.eip, code)
+		}
 
 		if instructions[code] == nil {
 			fmt.Printf("\n\nNot Implemented: %x\n", code)

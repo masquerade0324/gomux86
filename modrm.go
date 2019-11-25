@@ -37,8 +37,21 @@ func parseModRM(emu *Emulator, modrm *modRM) {
 	}
 }
 
+func setR8(emu *Emulator, modrm *modRM, val uint8) {
+	setRegister8(emu, int(modrm.reg), val)
+}
+
 func setR32(emu *Emulator, modrm *modRM, val uint32) {
 	setRegister32(emu, int(modrm.reg), val)
+}
+
+func setRm8(emu *Emulator, modrm *modRM, val uint8) {
+	if modrm.mod == 3 {
+		setRegister8(emu, int(modrm.rm), val)
+	} else {
+		addr := calcMemoryAddr(emu, modrm)
+		setMemory8(emu, addr, uint32(val))
+	}
 }
 
 func setRm32(emu *Emulator, modrm *modRM, val uint32) {
@@ -50,8 +63,21 @@ func setRm32(emu *Emulator, modrm *modRM, val uint32) {
 	}
 }
 
+func getR8(emu *Emulator, modrm *modRM) uint8 {
+	return getRegister8(emu, int(modrm.reg))
+}
+
 func getR32(emu *Emulator, modrm *modRM) uint32 {
 	return getRegister32(emu, int(modrm.reg))
+}
+
+func getRm8(emu *Emulator, modrm *modRM) uint8 {
+	if modrm.mod == 3 {
+		return getRegister8(emu, int(modrm.rm))
+	} else {
+		addr := calcMemoryAddr(emu, modrm)
+		return uint8(getMemory8(emu, addr))
+	}
 }
 
 func getRm32(emu *Emulator, modrm *modRM) uint32 {
