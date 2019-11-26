@@ -308,6 +308,17 @@ func outDxAl(emu *Emulator) {
 	emu.eip += 1
 }
 
+func swi(emu *Emulator) {
+	intIndex := getCodeU8(emu, 1)
+	emu.eip += 2
+
+	if intIndex == 0x10 {
+		biosVideo(emu)
+	} else {
+		fmt.Printf("unknown interrupt: 0x%02x\n", intIndex)
+	}
+}
+
 func initInstructions() {
 	instructions[0x01] = addRm32R32
 	instructions[0x3B] = cmpR32Rm32
@@ -348,6 +359,7 @@ func initInstructions() {
 	instructions[0xC3] = ret
 	instructions[0xC7] = movRm32Imm32
 	instructions[0xC9] = leave
+	instructions[0xCD] = swi
 	instructions[0xE8] = callRel32
 	instructions[0xE9] = nearJmp
 	instructions[0xEB] = shortJmp
